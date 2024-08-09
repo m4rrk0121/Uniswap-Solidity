@@ -1,0 +1,60 @@
+// SPDX-License-Identifier: MIT
+pragma solidity ^0.8.24;
+
+contract UniswapV2SwapExamples {
+    address private constant UNISWAP_V2_ROUTER02 =
+        0x4752ba5DBc23f44D87826276BF6Fd6b1C372aD24;
+
+    address private constant WETH = 0x4200000000000000000000000000000000000006;
+    address private constant CHIDO = 0xF31e6D62BFC485857af2186eB3d8ee94b4379feD;
+
+    IUniswapV2Router private router = IUniswapV2Router(UNISWAP_V2_ROUTER02);
+    IERC20 private weth = IERC20(WETH);
+    IERC20 private chido = IERC20(CHIDO);
+
+    // Swap WETH to CHIDO
+    function swapexactAmountIn(uint256 amountIn,uint256 amountOutMin)
+        external
+        returns (uint256 amountOut)
+    {          
+        weth.transferFrom(msg.sender, address(this), amountIn);
+        weth.approve(address(router), amountIn);
+
+        address[] memory path = new address[](2);
+        path[0] = WETH;
+        path[1] = CHIDO;
+
+        uint256[] memory amounts = router.swapExactTokensForTokens(
+            amountIn,amountOutMin, path, msg.sender, block.timestamp
+        );
+        // amounts[0] = WETH amount, amounts[1] = Chido amount
+        return amounts[1];
+
+    }
+}
+
+interface IUniswapV2Router {
+function swapExactTokensForTokens(
+  uint amountIn,
+  uint amountOutMin,
+  address[] calldata path,
+  address to,
+  uint deadline
+) external returns (uint[] memory amounts);
+}
+
+interface IERC20 {
+    function totalSupply() external view returns (uint256);
+    function balanceOf(address account) external view returns (uint256);
+    function transfer(address recipient, uint256 amount)
+        external
+        returns (bool);
+    function allowance(address owner, address spender)
+        external
+        view
+        returns (uint256);
+    function approve(address spender, uint256 amount) external returns (bool);
+    function transferFrom(address sender, address recipient, uint256 amount)
+        external
+        returns (bool);
+}
