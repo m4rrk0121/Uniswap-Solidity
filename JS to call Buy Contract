@@ -1,0 +1,45 @@
+const { ethers } = require('ethers');
+const provider = new ethers.providers.JsonRpcProvider("RPC URL");
+const signer1 = new ethers.Wallet('PRIVATE KEY', provider);
+
+const DeployedContract = "0x45edAFfD6D67943C7A09A9D3f603A3B5baC18BaD"
+
+const contractabi = [{"inputs":[{"internalType":"uint256","name":"amountIn","type":"uint256"},{"internalType":"uint256","name":"amountOutMin","type":"uint256"}],"name":"swapexactAmountIn","outputs":[{"internalType":"uint256","name":"amountOut","type":"uint256"}],"stateMutability":"nonpayable","type":"function"}]
+
+async function buyToken() {
+    const new_contract = new ethers.Contract(DeployedContract, contractabi, signer1);
+    const feeData = await provider.getFeeData();
+    const gasLimit = ethers.BigNumber.from('250000');
+    const maxFeePerGas = feeData.maxFeePerGas.mul(2);
+    const maxPriorityFeePerGas = feeData.maxPriorityFeePerGas.mul(2);
+
+
+    const    amountIn = 1;
+    const   amountOutMin = 0;
+
+    try {
+        const tx = await new_contract.swapexactAmountIn(
+            amountIn,
+            amountOutMin,
+            {
+                gasLimit: gasLimit,
+                maxFeePerGas: maxFeePerGas,
+                maxPriorityFeePerGas: maxPriorityFeePerGas,
+            }
+        );
+        console.log('Transaction sent:', tx.hash);
+                        
+        // Wait for the transaction with a timeout
+        const receipt = await Promise.race([
+            tx.wait(),
+            new Promise((_, reject) => setTimeout(() => reject(new Error('Transaction timeout')), 60000))
+        ]);
+
+        console.log('Transaction confirmed');
+    } catch (error) {
+        console.error('Transaction failed:', error.message);
+    }
+}
+
+// Call the function
+buyToken();
