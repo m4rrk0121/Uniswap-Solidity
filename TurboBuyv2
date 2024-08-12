@@ -1,0 +1,66 @@
+// SPDX-License-Identifier: MIT
+pragma solidity =0.8.24;
+pragma abicoder v2;
+
+
+interface IUniswapV2Router02 {
+    function swapExactTokensForTokens(
+        uint amountIn,
+        uint amountOutMin,
+        address[] calldata path,
+        address to,
+        uint deadline
+    ) external returns (uint[] memory amounts);
+}
+
+contract MultiTrade {
+      
+  // UniSwap
+    IUniswapV2Router02 private constant UniRouter = IUniswapV2Router02(0x4752ba5DBc23f44D87826276BF6Fd6b1C372aD24);
+    address private constant WETH = 0x4200000000000000000000000000000000000006;
+    IERC20 private weth = IERC20(WETH);
+
+function _tradeOnV2(uint256 amountIn, address output) private {
+
+    address[] memory path = new address[](2);
+    path[0] = WETH;
+    path[1] = output;
+    uint256 amountOutMin = 0;
+      
+    UniRouter.swapExactTokensForTokens(
+        amountIn,
+        amountOutMin,
+        path,
+        msg.sender,
+        block.timestamp
+    );
+}
+
+    function multiSwap(uint256 amountIn, uint256 iterations, address output) external {
+        require(iterations > 0 , "Invalid number of iterations");
+        
+        weth.transferFrom(msg.sender, address(this), amountIn * iterations);
+        weth.approve(address(UniRouter), amountIn * iterations);
+
+        for (uint256 i = 0; i < iterations; i++) {
+            _tradeOnV2(amountIn, output);
+        }
+    }
+}
+
+
+interface IERC20 {
+    function totalSupply() external view returns (uint256);
+    function balanceOf(address account) external view returns (uint256);
+    function transfer(address recipient, uint256 amount)
+        external
+        returns (bool);
+    function allowance(address owner, address spender)
+        external
+        view
+        returns (uint256);
+    function approve(address spender, uint256 amount) external returns (bool);
+    function transferFrom(address sender, address recipient, uint256 amount)
+        external
+        returns (bool);
+}
